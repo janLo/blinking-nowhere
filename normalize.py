@@ -8,13 +8,14 @@ class DataNormalizer(object):
         self._array = np.zeros(self.num_samples, dtype='f')
         self._idx = 0
 
-    def __call__(self, data, min_norm=0.02):
+    def __call__(self, data, min_norm=0.0):
         new_idx = (self._idx + 1) % self.num_samples
         self._array[self._idx] = data
 
         self._idx = new_idx
 
-        norm = max(np.amax(self._array), min_norm)
+        norm = max(np.amax(self._array), min_norm) 
+
         if norm != 0.0:
             return data / norm
         return data

@@ -11,18 +11,13 @@ from PIL import Image
 import time
 import math
 
-from smooth import Smoother
 from normalize import DataNormalizer, ArrayNormalizer
 
 
-nFFT = 9
-nFFT = 17
-#CHUNK = 128*nFFT
-CHUNK = 64*nFFT
-CHUNK = 32*nFFT
+nFFT = 400
+CHUNK = 3*nFFT
 FORMAT = pyaudio.paFloat32
 RATE = 44100
-#RATE = 48000
 
 
 class PyGamePutput(object):
@@ -89,14 +84,11 @@ def open_stream(channels):
 
 
 
-_normalizer = DataNormalizer(200)
-_normalizer_sample = ArrayNormalizer
-_smoother = Smoother(7)
+_normalizer = DataNormalizer(150)
 
 
 def process_data(data, CHANNELS):
     y = np.array(struct.unpack("%df" % (CHUNK * CHANNELS), data))
-#    y = _normalizer_sample(y)
 
     if CHANNELS == 2:
         y_L = y[::2]
@@ -112,11 +104,8 @@ def process_data(data, CHANNELS):
         y = np.fft.fft(y, nFFT)
         Y = y
 
-    ret = _normalizer(abs(Y[0]), min_norm=0.002) * 9.0
-    #ret = abs(Y[0])
-
-    r =  _smoother(ret)
-    return r
+    ret = _normalizer(abs(Y[1]), min_norm=3.8)
+    return ret
 
 
 
@@ -150,11 +139,11 @@ if __name__ == "__main__":
             stream = open_stream(CHANNELS)
             continue
 
-        val = min(9.0, process_data(data, CHANNELS))
+        val = min(1.0, process_data(data, CHANNELS))
 
-        offset = min(int(val * (color_len / 9.0)), 1023)
+        offset = min(int(val * color_len), 1023)
 
-        step = max(offset - last, -10)
+        step = max(offset - last, -20)
         offset = last + step
 
         if 0 < step < 10:
